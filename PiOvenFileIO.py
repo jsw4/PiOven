@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-#
-
+# this file is not used anymore
 class graph(object):
 	"""wrapper style RRD data and graphing interface for PiOven
         which makes it a wrapper around a wrapper... no real savings.
