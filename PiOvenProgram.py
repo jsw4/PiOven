@@ -1,52 +1,59 @@
 # -*- coding: utf-8 -*-#
 
+### Paths
 # libpath = DIR where the python library(s) are
-libpath = '/home/pi/PiOven'
+lib_path = '/home/pi/PiOven'
 # datapath = DIR where data and configuration files are stored
-datapath = '/var/www/html/data'
-status_file_name = datapath + '/current_status.json'
-log_file_name = datapath + '/PiOven.log'
-# htmlpath DIR where graph / HTML output is stored
-html_path = '/var/www/html/graphs'
-# URL of DIR where graphs and HTML is stored
-html_url_base = '/graphs/'
+data_path = '/var/www/html/data'
+# path to where graphs are output
+graph_path = '/var/www/html/graphs/'
+
+### Files
+status_filename = data_path + '/current_status.json'
+log_filename = data_path + '/PiOven.log'
+oven_conf_filename = data_path + '/boxoven_conf.json'
+program_filename = data_path + '/ezbake_prog.json'
+# todo : accept 'boxoven' and 'ezbake' as inputs
 
 import rrdtool
 import time
 import os  
 import sys
 try:
-    sys.path.index(libpath)
+    sys.path.index(lib_path)
 except ValueError:
-    sys.path.append(libpath)
+    sys.path.append(lib_path)
 import PiOven
 
-if not PiOven.log(log_file_name, 'PiOven Program initialized'):
+if not PiOven.log(log_filename, 'PiOven Program initialized'):
     sys.exit('Problem with the PiOven log file')
 
-if os.path.isfile(status_file_name):
-    PiOven.log(log_file_name, 'A PiOven program is already running, only one can run at a time')
+if os.path.isfile(status_filename):
+    PiOven.log(log_filename, 'A PiOven program is already running, only one can run at a time')
     sys.exit('PiOven program already running.')
 
-# get/open oven configuration
+oven = PiOven.file2obj(oven_conf_filename)
+PiOven.log(log_filename, oven.name +': oven configuration loaded')
 
-# get/open the program
+program = PiOven.file2obj(program_filename)
+PiOven.log(log_filename, program.name +': oven program loaded')
+# todo : return the acutal steps
 
-# run each step of the program
+# todo : make unique slug for rrd files
 
-# PiOven.status(status_file_name, 'not loaded yet', 0, '/graphs/snail2.png')
+PiOven.wrstatus(status_filename, program.name, 0, '/graphs/example-graph.png')
 
-# end of program
+# todo: run each step of the program
+
+i = 10
+while i > 0:
+    print i
+    time.sleep(2)
+    i = i - 1
+
 e = PiOven.elements()
 
-PiOven.log(log_file_name, str(e.cleanup()))
+PiOven.log(log_filename, str(e.cleanup()))
 
-os.remove(status_file_name)
-PiOven.log(log_file_name, 'Status file is removed; PiOven program has cleanly exited')
-
-
-
-
-
-
-
+os.remove(status_filename)
+PiOven.log(log_filename, 'Status file is removed; PiOven program has cleanly exited')

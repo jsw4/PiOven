@@ -2,6 +2,7 @@
 import json
 import time
 import RPi.GPIO as GPIO
+import Adafruit_MAX31855.MAX31855 as MAX31855
 
 class sensor(object):
 	"""Data from a thermocouple and the chip/computer at a given point of time
@@ -15,7 +16,7 @@ class sensor(object):
 		"""return a new sensor object"""
 
 	        # Raspberry Pi software SPI configuration.
-		import Adafruit_MAX31855.MAX31855 as MAX31855
+	        # These are the pins I have the thermocouple connected to
 	        CLK = 25
         	CS  = 24
         	DO  = 18
@@ -40,14 +41,12 @@ class elements(object):
 
 	def __init__(self):
 		"""Return a new elements object"""
-		import RPi.GPIO as GPIO
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(16, GPIO.OUT)
 		self.status = GPIO.input(16)
 
 	def refresh(self):
 		"""update the status attribute of elements object"""
-		import RPi.GPIO as GPIO
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(16, GPIO.OUT)
 		self.status = GPIO.input(16)
@@ -55,7 +54,6 @@ class elements(object):
 
 	def on(self):
                 """turn on the element"""
-		import RPi.GPIO as GPIO
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(16, GPIO.OUT)
 	        GPIO.output(16, True)
@@ -65,7 +63,6 @@ class elements(object):
 
 	def off(self):
                 """turn off the element"""
-		import RPi.GPIO as GPIO
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(16, GPIO.OUT)
 	        GPIO.output(16, False)
@@ -79,8 +76,8 @@ class elements(object):
                 GPIO.cleanup()
                 return 'GPIO is cleaned up. (OFF)'
 
-class status(object):
-	"""read (?) and write the status of the program. 
+class wrstatus(object):
+	"""write the status of the program. 
 
 	attributes:
 		status_file_name: a json file named current_status.json
@@ -109,24 +106,38 @@ class status(object):
 
                 try:
                         sf = open(status_file_name, "w")
-                        sf.write(json.dumps(self, default=lambda o: o.__dict__,
-                                            sort_keys=True, indent=4))
+                        sf.write(json.dumps(self,
+                                            default=lambda o: o.__dict__,
+                                            sort_keys=True,
+                                            indent=4))
                         sf.close
                 except IOError:
                         return False
 
 class log(object):
-        """write entries to the log
+        """write an entry to the log
         
         """
         def __init__(self, logfile, event):
-                import time
                 line = time.ctime() + " " + str(event) +"\n"
                 try: 
                         lf = open(logfile, "a+")
                         lf.write(line)
                         lf.close()
-                        self.success = True
+
                 except IOError:
-                        self.success = False
+                        return False
         
+class file2obj(object):
+        """read a json file and return object representing json
+        
+        """
+        def __init__(self, json_file_name):
+                # TODO : Validate json_file_name -> exists -> is JSON
+                try:
+                        with open(json_file_name) as json_data:
+                                dictionary = json.load(json_data)
+                                for k, v in dictionary.iteritems():
+                                    setattr(self, k, v)
+                except IOError:
+                        return False
