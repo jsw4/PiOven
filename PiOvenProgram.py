@@ -13,7 +13,7 @@ status_filename = data_path + '/current_status.json'
 log_filename = data_path + '/PiOven.log'
 oven_conf_filename = data_path + '/boxoven_conf.json'
 program_filename = data_path + '/ezbake_prog.json'
-# todo : accept 'boxoven' and 'ezbake' as inputs
+# todo : accept 'boxoven' and 'ezbake' (or whatever) as inputs
 
 import rrdtool
 import time
@@ -38,6 +38,11 @@ PiOven.log(log_filename, oven.name +': oven configuration loaded')
 program = PiOven.file2obj(program_filename)
 PiOven.log(log_filename, program.name +': oven program loaded')
 # todo : return the acutal steps
+
+for endpoint in program.endpoints:
+    print program.endpoints.index(endpoint), type(endpoint)
+    
+sys.exit ('break')
 
 # todo : make unique slug for rrd files
 

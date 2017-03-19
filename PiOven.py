@@ -142,7 +142,6 @@ class file2obj(object):
                 except IOError:
                         return False
 
-class line(object):
-	"""take endpoint from endpoints and calcluate the slope (and other stuff?)
-	
-	"""
+
+
+
