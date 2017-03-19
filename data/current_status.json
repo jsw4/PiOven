@@ -1,0 +1,9 @@
+{
+    "element_status": 0, 
+    "graph_url": "/graphs/example-graph.png", 
+    "oven_temp": 72.95, 
+    "program_name": "EZ Bake Example Cycle", 
+    "program_step_number": 0, 
+    "room_temp": 73.0625, 
+    "time": "Sun Mar 19 13:40:15 2017"
+}

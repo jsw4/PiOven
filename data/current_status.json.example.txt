@@ -1,10 +1,10 @@
 {
   "time": "Tue Mar 14 19:10:36 2017",
-  "oven_temp": 1,
-  "chip_temp": 1,
+  "oven_temp": 2,
+  "chip_temp": 3,
   "element_status": false,
   "program_name": "Some Oven Program",
   "program_step_number": 0,
-  "graph_url": "http://some.net/path/to.png"
+  "graph_url": "/graphs/example-graph.png"
 }
 
