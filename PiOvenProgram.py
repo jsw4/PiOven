@@ -48,25 +48,31 @@ for endpoint in program.endpoints:
         print 'INF to ' + str(line.temp) # remove after testing
         while line.temp > sensor.oven:
             elements.on()
-            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
             time.sleep(60)
+            sensor = PiOven.sensor()
+            print line.temp, sensor.oven
+            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
             # dont forget to graph each time... this has to be possible in a big mega func
             
         # off until the temp is reached
         else:
             elements.off()
-            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
             time.sleep(60)
-
+            sensor = PiOven.sensor()
+            print line.temp, sensor.oven # remove after testing
+            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
+            
     # slope is not INF
     else:
         start_t = time.time()
-        end_t = startime + (int(line.time) * 60)
+        end_t = start_t + (int(line.time) * 60)
         while end_t > time.time():
             target_temp = line.slope * ((time.time() - start_t) * 60) + last_temp
-            print tartget_temp # remove after testing
-            if sensor.oven() < target_temp:
+            sensor = PiOven.sensor()
+            print target_temp, sensor.oven, line.slope # remove after testing
+            if sensor.oven < target_temp:
                 elements.on()
+                time.sleep(60)
                 PiOven.wrstatus(
                                 cfg.status_filename,
                                 program.name,
@@ -75,9 +81,10 @@ for endpoint in program.endpoints:
                                 str(target_temp),
                                 rrdslug
                                 )
-                time.sleep(60)
+            
             else:
                 elements.on()
+                time.sleep(60)
                 PiOven.wrstatus(
                                 cfg.status_filename,
                                 program.name,
@@ -86,7 +93,6 @@ for endpoint in program.endpoints:
                                 str(target_temp),
                                 rrdslug
                                 )
-                time.sleep(60)
 
     last_temp = line.temp # for the next line
     

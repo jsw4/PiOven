@@ -21,10 +21,10 @@ class sensor(object):
 	        CLK = 25
         	CS  = 24
         	DO  = 18
-        	max = MAX31855.MAX31855(CLK, CS, DO)
+        	thermocouple = MAX31855.MAX31855(CLK, CS, DO)
 
-	        self.oven = 1.8 * max.readTempC() +32
-	        self.room = 1.8 * max.readInternalC() +32
+	        self.oven = 1.8 * thermocouple.readTempC() +32
+	        self.room = 1.8 * thermocouple.readInternalC() +32
 
 
 class elements(object):
