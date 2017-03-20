@@ -29,12 +29,12 @@ sensor = PiOven.sensor()
 elements = PiOven.elements()
 
 # setup the RRD stuff
-slug = oven.slug + '-' + program.slug + '-' + time.strftime("%m%H%M")
-rrdslug = cfg.data_path + slug + '.rrd'
-graphslug = cfg.graph_path + slug + '.png'
-graphstr = cfg.graphstr(rrdslug)
+#slug = oven.slug + '-' + program.slug + '-' + time.strftime("%m%H%M")
+#rrdslug = cfg.data_path + slug + '.rrd'
+#graphslug = cfg.graph_path + slug + '.png'
+#graphstr = cfg.graphstr(rrdslug)
 
-rrdtool.create(str(rrdslug), cfg.createstr)
+#rrdtool.create(str(rrdslug), cfg.createstr)
 
 last_temp = sensor.oven
 
