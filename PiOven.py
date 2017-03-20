@@ -3,6 +3,7 @@ import json
 import time
 import RPi.GPIO as GPIO
 import Adafruit_MAX31855.MAX31855 as MAX31855
+import rrdtool
 
 class sensor(object):
 	"""Data from a thermocouple and the chip/computer at a given point of time
@@ -93,7 +94,7 @@ class wrstatus(object):
 		delete_file:
 	"""
 
-        def __init__(self, status_file_name, program_name, program_step_number, html_url):
+        def __init__(self, status_file_name, program_name, program_step_number, html_url, calc_temp, rrdslug):
                 self.time = time.ctime()
                 s = sensor()
                 self.oven_temp = s.oven
@@ -113,6 +114,11 @@ class wrstatus(object):
                         sf.close
                 except IOError:
                         return False
+
+                self.calc_temp = calc_temp
+                self.rrdslug = rrdslug
+
+                rrdtool.update(str(self.rrdslug), 'N:%s:%s:%s' %(self.oven_temp,self.room_temp,self.calc_temp))
 
 class log(object):
         """write an entry to the log
@@ -143,5 +149,21 @@ class file2obj(object):
                         return False
 
 
+class line(object):
+        """ takes a single program step and calculates slope function
+
+        """
+        def __init__(self, endpoint, last_temp):
+                for k, v in endpoint.iteritems():
+                        setattr(self, k, v)
+                self.y1 = float(last_temp)
+                self.x1 = 0 # now
+                self.y2 = float(self.temp)
+                self.x2 = float(self.time)
+                try:
+                        self.slope = (self.y2 - self.y1) / (self.x2 - self.x1)
+                except ZeroDivisionError:
+                        self.slope = 'INF'
+                        
 
 

@@ -1,64 +1,96 @@
 # -*- coding: utf-8 -*-#
 
-### Paths
 # libpath = DIR where the python library(s) are
 lib_path = '/home/pi/PiOven'
-# datapath = DIR where data and configuration files are stored
-data_path = '/var/www/html/data'
-# path to where graphs are output
-graph_path = '/var/www/html/graphs/'
 
-### Files
-status_filename = data_path + '/current_status.json'
-log_filename = data_path + '/PiOven.log'
-oven_conf_filename = data_path + '/boxoven_conf.json'
-program_filename = data_path + '/ezbake_prog.json'
 # todo : accept 'boxoven' and 'ezbake' (or whatever) as inputs
 
-import rrdtool
-import time
-import os  
 import sys
 try:
     sys.path.index(lib_path)
 except ValueError:
     sys.path.append(lib_path)
 import PiOven
+import PiOvenConfig as cfg
+import rrdtool
+import time
+import os  
 
-if not PiOven.log(log_filename, 'PiOven Program initialized'):
+if not PiOven.log(cfg.log_filename, 'PiOven Program initializing'):
     sys.exit('Problem with the PiOven log file')
 
-if os.path.isfile(status_filename):
-    PiOven.log(log_filename, 'A PiOven program is already running, only one can run at a time')
+if os.path.isfile(cfg.status_filename):
+    PiOven.log(cfg.log_filename, 'A PiOven program is already running, only one can run at a time')
     sys.exit('PiOven program already running.')
 
-oven = PiOven.file2obj(oven_conf_filename)
-PiOven.log(log_filename, oven.name +': oven configuration loaded')
+oven = PiOven.file2obj(cfg.oven_conf_filename)
+program = PiOven.file2obj(cfg.program_filename)
+sensor = PiOven.sensor()
+elements = PiOven.elements()
 
-program = PiOven.file2obj(program_filename)
-PiOven.log(log_filename, program.name +': oven program loaded')
-# todo : return the acutal steps
+# setup the RRD stuff
+slug = oven.slug + '-' + program.slug + '-' + time.strftime("%m%H%M")
+rrdslug = cfg.data_path + slug + '.rrd'
+graphslug = cfg.graph_path + slug + '.png'
+graphstr = cfg.graphstr(rrdslug)
+
+rrdtool.create(str(rrdslug), cfg.createstr)
+
+last_temp = sensor.oven
 
 for endpoint in program.endpoints:
-    print program.endpoints.index(endpoint), type(endpoint)
+    line = PiOven.line(endpoint,last_temp)
+    # we get line.x1 ... line.y2 and line.slope, line.step, line.temp, line.time
+    # program.endpoints.index(endpoint) = array index
     
-sys.exit ('break')
+    if line.slope == 'INF':
+        # on until the temp is reached
+        print 'INF to ' + str(line.temp) # remove after testing
+        while line.temp > sensor.oven:
+            elements.on()
+            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
+            time.sleep(60)
+            # dont forget to graph each time... this has to be possible in a big mega func
+            
+        # off until the temp is reached
+        else:
+            elements.off()
+            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
+            time.sleep(60)
 
-# todo : make unique slug for rrd files
+    # slope is not INF
+    else:
+        start_t = time.time()
+        end_t = startime + (int(line.time) * 60)
+        while end_t > time.time():
+            target_temp = line.slope * ((time.time() - start_t) * 60) + last_temp
+            print tartget_temp # remove after testing
+            if sensor.oven() < target_temp:
+                elements.on()
+                PiOven.wrstatus(
+                                cfg.status_filename,
+                                program.name,
+                                line.step,
+                                '/graphs/' + slug + '.png',
+                                str(target_temp),
+                                rrdslug
+                                )
+                time.sleep(60)
+            else:
+                elements.on()
+                PiOven.wrstatus(
+                                cfg.status_filename,
+                                program.name,
+                                line.step,
+                                '/graphs/' + slug + '.png',
+                                str(target_temp),
+                                rrdslug
+                                )
+                time.sleep(60)
 
-PiOven.wrstatus(status_filename, program.name, 0, '/graphs/example-graph.png')
+    last_temp = line.temp # for the next line
+    
+PiOven.log(cfg.log_filename, str(elements.cleanup()))
 
-# todo: run each step of the program
-
-i = 10
-while i > 0:
-    print i
-    time.sleep(2)
-    i = i - 1
-
-e = PiOven.elements()
-
-PiOven.log(log_filename, str(e.cleanup()))
-
-os.remove(status_filename)
-PiOven.log(log_filename, 'Status file is removed; PiOven program has cleanly exited')
+os.remove(cfg.status_filename)
+PiOven.log(cfg.log_filename, 'Status file is removed; PiOven program has cleanly exited')
