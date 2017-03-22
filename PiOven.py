@@ -5,6 +5,17 @@ import RPi.GPIO as GPIO
 import Adafruit_MAX31855.MAX31855 as MAX31855
 import rrdtool
 
+
+# Raspberry Pi software SPI configuration.
+# These are the pins I have the thermocouple connected to
+CLK = 25
+CS  = 24
+DO  = 18
+thermocouple = MAX31855.MAX31855(CLK, CS, DO)
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(16, GPIO.OUT)
+
 class sensor(object):
 	"""Data from a thermocouple and the chip/computer at a given point of time
 
@@ -16,16 +27,13 @@ class sensor(object):
 	def __init__(self):
 		"""return a new sensor object"""
 
-	        # Raspberry Pi software SPI configuration.
-	        # These are the pins I have the thermocouple connected to
-	        CLK = 25
-        	CS  = 24
-        	DO  = 18
-        	thermocouple = MAX31855.MAX31855(CLK, CS, DO)
-
 	        self.oven = 1.8 * thermocouple.readTempC() +32
 	        self.room = 1.8 * thermocouple.readInternalC() +32
 
+        def refresh(self):
+                self.oven = 1.8 * thermocouple.readTempC() +32
+	        self.room = 1.8 * thermocouple.readInternalC() +32
+	        return self
 
 class elements(object):
 	"""The elements in the oven are controlled by a relay.
@@ -41,32 +49,26 @@ class elements(object):
 	"""
 
 	def __init__(self):
-		"""Return a new elements object"""
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(16, GPIO.OUT)
+		"""Return a new elements object"""		
 		self.status = GPIO.input(16)
 
 	def refresh(self):
 		"""update the status attribute of elements object"""
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(16, GPIO.OUT)
 		self.status = GPIO.input(16)
 		return self
 
 	def on(self):
                 """turn on the element"""
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(16, GPIO.OUT)
 	        GPIO.output(16, True)
+	        self.status = GPIO.input(16)
 	        #should be logged
 	        print "heat on" #testing output
 	        return self
 
 	def off(self):
                 """turn off the element"""
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(16, GPIO.OUT)
 	        GPIO.output(16, False)
+	        self.status = GPIO.input(16)
 	        # should be logged
 	        print "heat off" #testing output 
 	        return self
@@ -85,25 +87,27 @@ class wrstatus(object):
 		time: time of the status
 		oven_temp: temp in the oven
 		room_temp: temp outside the oven
+		calc_temp: calculated target temp for this time
 		element_status: status of elements (on/off)
 		program_name: name of the oven program
 		program_step_number: which step of the oven program is being executed
-		graph_url: path to the png file calculated from slug.
+		#graph_url: path to the png file calculated from slug.
 	
 	methods:
 		delete_file:
 	"""
 
-        def __init__(self, status_file_name, program_name, program_step_number, html_url, calc_temp, rrdslug):
+        def __init__(self, status_file_name, program_name, program_step_number, calc_temp):
                 self.time = time.ctime()
                 s = sensor()
                 self.oven_temp = s.oven
                 self.room_temp = s.room
+                self.calc_temp = calc_temp
                 e = elements()
                 self.element_status = e.status 
                 self.program_name = program_name
                 self.program_step_number = program_step_number
-                self.graph_url = html_url
+                self.graph_url = 'URL'
 
                 try:
                         sf = open(status_file_name, "w")
@@ -115,10 +119,9 @@ class wrstatus(object):
                 except IOError:
                         return False
 
-                self.calc_temp = calc_temp
-                self.rrdslug = rrdslug
+                # self.rrdslug = rrdslug
 
-                rrdtool.update(str(self.rrdslug), 'N:%s:%s:%s' %(self.oven_temp,self.room_temp,self.calc_temp))
+                # rrdtool.update(str(self.rrdslug), 'N:%s:%s:%s' %(self.oven_temp,self.room_temp,self.calc_temp))
 
 class log(object):
         """write an entry to the log
@@ -165,5 +168,10 @@ class line(object):
                 except ZeroDivisionError:
                         self.slope = 'INF'
                         
-
+                if (self.y1 < self.y2):
+                        self.slopedir = 'UP'
+                elif (self.y1 > self.y2):
+                        self.slopedir = 'DOWN'
+                else:
+                        self.slopedir = 'HORIZ'
 

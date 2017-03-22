@@ -9,12 +9,12 @@
     },
     {
       "step": 2,
-      "time": 15,
+      "time": 30,
       "temp": 90
     },
     {
       "step": 3,
-      "time": 90,
+      "time": 120,
       "temp": 70
     }
   ]

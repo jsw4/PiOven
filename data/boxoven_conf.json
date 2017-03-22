@@ -1,7 +1,8 @@
 {
   "name": "EZ Bake Cardboard Box Oven",
   "slug": "cbox",
-  "maxsafetemp": 100,
+  "maxsafetemp": 120,
+  "maxpreheattime": 60,
   "pwrinterval": 15
 }
 

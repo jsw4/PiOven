@@ -42,58 +42,67 @@ for endpoint in program.endpoints:
     line = PiOven.line(endpoint,last_temp)
     # we get line.x1 ... line.y2 and line.slope, line.step, line.temp, line.time
     # program.endpoints.index(endpoint) = array index
-    
-    if line.slope == 'INF':
-        # on until the temp is reached
-        print 'INF to ' + str(line.temp) # remove after testing
-        while line.temp > sensor.oven:
-            elements.on()
-            time.sleep(60)
-            sensor = PiOven.sensor()
-            print line.temp, sensor.oven
-            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
-            # dont forget to graph each time... this has to be possible in a big mega func
-            
-        # off until the temp is reached
-        else:
-            elements.off()
-            time.sleep(60)
-            sensor = PiOven.sensor()
-            print line.temp, sensor.oven # remove after testing
-            PiOven.wrstatus(cfg.status_filename, program.name, line.step, '/graphs/' + slug + '.png', str(line.temp), rrdslug)
-            
-    # slope is not INF
-    else:
-        start_t = time.time()
-        end_t = start_t + (int(line.time) * 60)
-        while end_t > time.time():
-            target_temp = line.slope * ((time.time() - start_t) * 60) + last_temp
-            sensor = PiOven.sensor()
-            print target_temp, sensor.oven, line.slope # remove after testing
-            if sensor.oven < target_temp:
-                elements.on()
-                time.sleep(60)
-                PiOven.wrstatus(
-                                cfg.status_filename,
-                                program.name,
-                                line.step,
-                                '/graphs/' + slug + '.png',
-                                str(target_temp),
-                                rrdslug
-                                )
-            
-            else:
-                elements.on()
-                time.sleep(60)
-                PiOven.wrstatus(
-                                cfg.status_filename,
-                                program.name,
-                                line.step,
-                                '/graphs/' + slug + '.png',
-                                str(target_temp),
-                                rrdslug
-                                )
+    # begining of program should be logged. (in line object?)
 
+    start_t = time.time()
+    if line.slope == 'INF':
+        # max preheat time in minutes
+        end_t = start_t + (int(oven.maxpreheattime) * 60)
+    else:        
+        end_t = start_t + (int(line.time) * 60)
+        
+    q = 0
+    while end_t > time.time():
+
+        if q == 5:
+            end_t = time.time()
+            continue # end of infinte up/down program step 
+        
+        if line.slope == 'INF':
+            target_temp = line.temp
+        else:
+            target_temp = line.slope * ((time.time() - start_t) / 60) + last_temp       
+
+        q = 0
+        while (q < 4):
+            
+            f = 0
+            while (f < 3):
+                time.sleep(5)
+                # every 5 seconds
+                sensor.refresh()
+                # todo : saftey check
+                print 'sensor ' + str(sensor.oven) # remove when done testing
+                f = f + 1
+            
+            # every 15 seconds (3 x 5 second inner loop)
+            print 'target ' + str(target_temp), line.slopedir # remove when done testing
+            if sensor.oven >= target_temp:
+                # todo : add a log entry in the object (update the class method) when this happens.
+                elements.off()
+                if line.slope == 'INF' and line.slopedir == 'UP' :
+                    print 'done inf up line' # remove when done testing
+                    q = 4
+            else:
+                # log this too
+                elements.on()
+                if line.slope == 'INF' and line.slopedir == 'DOWN' :
+                    print 'done inf up line' # remove later (did you really test down?)
+                    q = 4
+                
+            PiOven.wrstatus(cfg.status_filename, program.name, line.step, target_temp)
+            q = q + 1
+        # every minute (4 x 15 second loop)
+        # add graph data and make a graph
+        print 'end of the minute cycle', start_t - time.time()
+        
+    # time is over or temperature is reached.
+
+    # if time is over but temperature is not reached
+    # sys.exit('Preheat / cooldown time exceeded program ending.)
+
+    # log the end of an oven program instruction / line.
+        
     last_temp = line.temp # for the next line
     
 PiOven.log(cfg.log_filename, str(elements.cleanup()))
