@@ -4,6 +4,7 @@ import time
 import RPi.GPIO as GPIO
 import Adafruit_MAX31855.MAX31855 as MAX31855
 import rrdtool
+import PiOvenConfig as cfg
 
 
 # Raspberry Pi software SPI configuration.
@@ -61,7 +62,7 @@ class elements(object):
                 """turn on the element"""
 	        GPIO.output(16, True)
 	        self.status = GPIO.input(16)
-	        #should be logged
+	        log(cfg.log_filename, 'Elements turned on')
 	        print "heat on" #testing output
 	        return self
 
@@ -69,7 +70,7 @@ class elements(object):
                 """turn off the element"""
 	        GPIO.output(16, False)
 	        self.status = GPIO.input(16)
-	        # should be logged
+	        log(cfg.log_filename, 'Elements turned off')
 	        print "heat off" #testing output 
 	        return self
 
@@ -91,13 +92,13 @@ class wrstatus(object):
 		element_status: status of elements (on/off)
 		program_name: name of the oven program
 		program_step_number: which step of the oven program is being executed
-		#graph_url: path to the png file calculated from slug.
-	
+		graph_url: path to the png file calculated from the graphfile + cfg.graph_url
+		
 	methods:
 		delete_file:
 	"""
 
-        def __init__(self, status_file_name, program_name, program_step_number, calc_temp):
+        def __init__(self, status_file_name, program_name, program_step_number, calc_temp, graphfile):
                 self.time = time.ctime()
                 s = sensor()
                 self.oven_temp = s.oven
@@ -107,7 +108,7 @@ class wrstatus(object):
                 self.element_status = e.status 
                 self.program_name = program_name
                 self.program_step_number = program_step_number
-                self.graph_url = 'URL'
+                self.graph_url = str(cfg.graph_url) + str(graphfile)
 
                 try:
                         sf = open(status_file_name, "w")
@@ -125,6 +126,7 @@ class wrstatus(object):
 
 class log(object):
         """write an entry to the log
+        todo - this is really a function, not an object
         
         """
         def __init__(self, logfile, event):
