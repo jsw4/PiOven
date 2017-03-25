@@ -77,6 +77,7 @@ class elements(object):
 
         #def __del__(self):
 	def cleanup(self):
+                GPIO.output(16, False)
                 GPIO.cleanup()
                 return 'GPIO is cleaned up. (OFF)'
 
@@ -93,22 +94,24 @@ class wrstatus(object):
 		program_name: name of the oven program
 		program_step_number: which step of the oven program is being executed
 		graph_url: path to the png file calculated from the graphfile + cfg.graph_url
+		instructions: array of program steps|intructions|endpoints (todo: clean up word use)
 		
 	methods:
 		delete_file:
 	"""
 
-        def __init__(self, status_file_name, program_name, program_step_number, calc_temp, graphfile):
+        def __init__(self, status_file_name, program_name, program_step_number, calc_temp, graphfile, endpoints):
                 self.time = time.ctime()
                 s = sensor()
-                self.oven_temp = s.oven
-                self.room_temp = s.room
-                self.calc_temp = calc_temp
+                self.oven_temp = round(s.oven, 1)
+                self.room_temp = round(s.room, 1)
+                self.calc_temp = round(calc_temp, 1)
                 e = elements()
                 self.element_status = e.status 
                 self.program_name = program_name
                 self.program_step_number = program_step_number
                 self.graph_url = str(cfg.graph_url) + str(graphfile)
+                self.instructions = endpoints
 
                 try:
                         sf = open(status_file_name, "w")
@@ -119,10 +122,6 @@ class wrstatus(object):
                         sf.close
                 except IOError:
                         return False
-
-                # self.rrdslug = rrdslug
-
-                # rrdtool.update(str(self.rrdslug), 'N:%s:%s:%s' %(self.oven_temp,self.room_temp,self.calc_temp))
 
 class log(object):
         """write an entry to the log

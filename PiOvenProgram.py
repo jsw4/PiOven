@@ -19,20 +19,29 @@ import os
 if not PiOven.log(cfg.log_filename, 'PiOven Program initializing'):
     sys.exit('Problem with the PiOven log file')
 
-if os.path.isfile(cfg.status_filename):
+pid_filename = cfg.data_path + 'PiOven.PID'
+
+if os.path.isfile(pid_filename):
     PiOven.log(cfg.log_filename, 'A PiOven program is already running, only one can run at a time')
     sys.exit('PiOven program already running.')
+
+me = str(os.getpid())
+
+with open(pid_filename, "w") as pid_file:
+    pid_file.write(me)
+    pid_file.close
 
 oven = PiOven.file2obj(cfg.oven_conf_filename)
 program = PiOven.file2obj(cfg.program_filename)
 sensor = PiOven.sensor()
 elements = PiOven.elements()
 
-# setup the RRD stuff
+#### RRD stuff
 slug = oven.slug + '-' + program.slug + '-' + time.strftime("%m%d%H%M")
 rrdslug = cfg.data_path + slug + '.rrd'
-graphslug = cfg.graph_path + slug + '.png'
-graphstr = cfg.graphstr(rrdslug)
+graphname = slug + '.png'
+graphslug = cfg.graph_path + graphname
+graphstr = cfg.graphstr(rrdslug, program.name)
 createstr = cfg.createstr(oven.maxsafetemp)
 
 rrdtool.create(str(rrdslug), createstr)
@@ -40,12 +49,11 @@ rrdtool.create(str(rrdslug), createstr)
 last_temp = sensor.oven
 
 for endpoint in program.endpoints:
+    # program.endpoints.index(endpoint) returns array index of current endpoint
     line = PiOven.line(endpoint,last_temp)
-    # we get line.x1 ... line.y2 and line.slope, line.step, line.temp, line.time
-    # program.endpoints.index(endpoint) = array index
-    # logging ... 
-
     start_t = time.time()
+    ls = "Begining of instruction number %s, %s minutes to %s deg. F" % ( str(line.step), str(line.time), str(line.temp) )
+    PiOven.log(cfg.log_filename, ls)
     if line.slope == 'INF':
         # max preheat time in minutes
         end_t = start_t + (int(oven.maxpreheattime) * 60)
@@ -84,39 +92,45 @@ for endpoint in program.endpoints:
                 f = f + 1
             
             # every 15 seconds (3 x 5 second loop)
-            print 'target ' + str(target_temp), line.slopedir, 'current ' + str(sensor.oven) # remove when done testing
             if sensor.oven >= target_temp:
-                # todo : only turn on if we are off
-                # todo : add a log entry in the object (update the class method) when this happens.
-                elements.off()
+                if elements.status == 1:
+                    elements = elements.off()
                 if line.slope == 'INF' and line.slopedir == 'UP' :
                     print 'done inf up line' # remove when done testing
                     q = 4
             else:
-                # todo : only turn off if we are on
-                # log this too
-                elements.on()
+                if elements.status == 0:
+                    elements = elements.on()
                 if line.slope == 'INF' and line.slopedir == 'DOWN' :
-                    print 'done inf up line' # remove later (did you really test down?)
+                    print 'done inf down line' # remove later (did you really test down?)
                     q = 4
                 
-            PiOven.wrstatus(cfg.status_filename, program.name, line.step, target_temp, rrdslug)
+            PiOven.wrstatus(cfg.status_filename, program.name, line.step, target_temp, graphname, program.endpoints)
             q = q + 1
+            
         # every minute (4 x 15 second loop)
-        
+        print 'target ' + str(target_temp), line.slopedir, 'current ' + str(sensor.oven) # remove when done testing
         print 'end of the minute cycle', start_t - time.time()
         
-    # time is over or temperature is reached.
-
     # if time is over but temperature is not reached
-    # sys.exit('Preheat / cooldown time exceeded program ending.)
+    if (end_t <= time.time()) and (line.slope == 'INF'):
+        ovenerror = "%s heat/cool %s time, %s, exceeded; program is ending." % (line.slope, line.slopedir, oven.maxpreheattime)
+        PiOven.log(cfg.log_filename, ovenerror)
+        PiOven.log(cfg.log_filename, str(elements.cleanup()))
+        os.remove(pid_filename)
+        # remove the rrd too
+        PiOven.log(cfg.log_filename, 'PID file is removed')
+
+        sys.exit('Preheat / cooldown time exceeded program ending.')
 
     # log the end of an oven program instruction / line.
         
     last_temp = line.temp # for the next line
-    
+
+# end of instructions
+
 PiOven.log(cfg.log_filename, str(elements.cleanup()))
 
-os.remove(cfg.status_filename)
+os.remove(pid_filename)
 # remove the rrd too
-PiOven.log(cfg.log_filename, 'Status file is removed; PiOven program has cleanly exited')
+PiOven.log(cfg.log_filename, 'PID file is removed; PiOven program has cleanly exited')

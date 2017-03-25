@@ -1,10 +1,10 @@
 {
-    "calc_temp": 90.0, 
+    "calc_temp": 70.04817687780769, 
     "element_status": 0, 
-    "graph_url": "URL", 
-    "oven_temp": 90.95, 
+    "graph_url": "/graphs/cbox-ezbx-03251050.png", 
+    "oven_temp": 70.25, 
     "program_name": "EZ Bake Example Cycle", 
-    "program_step_number": 2, 
-    "room_temp": 70.025, 
-    "time": "Tue Mar 21 22:32:10 2017"
+    "program_step_number": 6, 
+    "room_temp": 65.1875, 
+    "time": "Sat Mar 25 18:16:34 2017"
 }

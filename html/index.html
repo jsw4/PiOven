@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PiOven</title>
+  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+</head>
+<body>
+
+<h1 id='progname'>Program</h1>
+<p>Status last updated: <span id='time'></span>
+	<h2>Current Temperatures</h2>
+	<ul>
+	<li class="status">Oven:&nbsp;<span id='oventemp'> ... waiting for data</span></li>
+	<li>Target:&nbsp;<span id='targettemp'> ... waiting for data</span></li>
+	<li>Circuit:&nbsp;<span id='chiptemp'> ...waiting for data</span></li>
+	</ul>
+
+	<img src='wfd' id='graph' />
+
+	<h2>Oven Instructions</h2>
+ 
+<script>
+function gettemp()
+{
+
+      var TempURL = "http://" + window.location.host + "/cgi-bin/PiOvenAJAX.py"
+      $.getJSON( TempURL, function( data ) {
+
+      var items = [];
+      $.each( data, function( key, val ) {
+        items.push( val );
+      });
+
+      var imagesource = "http://" + window.location.host + items[3]  + '#' + Math.random();
+      var elementstatus = items[2];
+      var currentstep = items[6];
+
+      if (elementstatus == 1) {
+	color = 'red';
+      }      
+      if (elementstatus == 0) {
+	color = 'black';
+      }
+      $(".status").css('color', color);
+
+      $("#oventemp").text(items[4]); 
+      $("#targettemp").text(items[0]); 
+      $("#chiptemp").text(items[1]); 
+      $("#progname").text(items[5]); 
+      $("#time").text(items[7]); 
+
+      $("#graph").removeAttr('src').attr('src', imagesource); 
+
+    });
+}
+setInterval( gettemp, 15000 );
+</script>
+ 
+</body>
+</html>
