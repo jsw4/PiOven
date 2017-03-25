@@ -113,15 +113,15 @@ for endpoint in program.endpoints:
         print 'end of the minute cycle', start_t - time.time()
         
     # if time is over but temperature is not reached
-    if (end_t <= time.time()) and (line.slope == 'INF'):
-        ovenerror = "%s heat/cool %s time, %s, exceeded; program is ending." % (line.slope, line.slopedir, oven.maxpreheattime)
-        PiOven.log(cfg.log_filename, ovenerror)
-        PiOven.log(cfg.log_filename, str(elements.cleanup()))
-        os.remove(pid_filename)
+    # FIX: got here when temp was reached. (time was not up)
+    #if (end_t <= time.time()) and (line.slope == 'INF'):
+        #ovenerror = "%s heat/cool %s time, %s, exceeded; program is ending." % (line.slope, line.slopedir, oven.maxpreheattime)
+        #PiOven.log(cfg.log_filename, ovenerror)
+        #PiOven.log(cfg.log_filename, str(elements.cleanup()))
+        #os.remove(pid_filename)
         # remove the rrd too
-        PiOven.log(cfg.log_filename, 'PID file is removed')
-
-        sys.exit('Preheat / cooldown time exceeded program ending.')
+        #PiOven.log(cfg.log_filename, 'PID file is removed')
+        #sys.exit('Preheat / cooldown time exceeded program ending.')
 
     # log the end of an oven program instruction / line.
         
