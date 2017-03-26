@@ -20,7 +20,8 @@ print json.dumps({
   "element_status": status.element_status,
   "program_name": status.program_name,
   "program_step_number": status.program_step_number,
-  "graph_url": status.graph_url
+  "graph_url": status.graph_url,
+  "instructions": status.instructions
   },
 indent=4,
 sort_keys=True,

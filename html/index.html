@@ -7,8 +7,21 @@
 </head>
 <body>
 
+<header>
 <h1 id='progname'>Program</h1>
 <p>Status last updated: <span id='time'></span>
+</header>
+
+<nav>
+<ul>
+<li>Advance to next instruction</li><!-- make this a no op unless a program is running -->
+<li>Stop running program</li><!-- make this a no op unless a program is running -->
+<li>Start a set of instructions</li><!-- make this a no op if a program is running -->
+<ul>
+</nav>
+
+<div id='temps'>
+
 	<h2>Current Temperatures</h2>
 	<ul>
 	<li class="status">Oven:&nbsp;<span id='oventemp'> ... waiting for data</span></li>
@@ -16,10 +29,31 @@
 	<li>Circuit:&nbsp;<span id='chiptemp'> ...waiting for data</span></li>
 	</ul>
 
-	<img src='wfd' id='graph' />
+	<img src='' id='graph' />
+
+</div>
+
+<div id='instructions'>
 
 	<h2>Oven Instructions</h2>
- 
+	<table id="oveninst">
+		<thead>
+		  <tr>
+		    <th>Step No</th>
+		    <th>Time (or HOLD)</th>
+		    <th>Ending Temp</th>
+		  </tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table> 
+	
+</div>
+
+<footer>
+<p id='ts'></p>
+</footer>
+
 <script>
 function gettemp()
 {
@@ -30,6 +64,11 @@ function gettemp()
       var items = [];
       $.each( data, function( key, val ) {
         items.push( val );
+      });
+
+      var instructions = []
+      $.each( items[4], function(key, val) {
+	instructions.push( val );
       });
 
       var imagesource = "http://" + window.location.host + items[3]  + '#' + Math.random();
@@ -44,17 +83,72 @@ function gettemp()
       }
       $(".status").css('color', color);
 
-      $("#oventemp").text(items[4]); 
+      $("#oventemp").text(items[5]); 
       $("#targettemp").text(items[0]); 
       $("#chiptemp").text(items[1]); 
-      $("#progname").text(items[5]); 
-      $("#time").text(items[7]); 
-
-      $("#graph").removeAttr('src').attr('src', imagesource); 
+      $("#progname").text(items[6]); 
+      $("#time").text(items[8]); 
 
     });
+
+
 }
+
+function getgraph() {
+
+      var TempURL = "http://" + window.location.host + "/cgi-bin/PiOvenAJAX.py"
+      $.getJSON( TempURL, function( data ) {
+
+      var items = [];
+      $.each( data, function( key, val ) {
+        items.push( val );
+      });
+
+      var imagesource = "http://" + window.location.host + items[3]  + '#' + Math.random();
+      $("#graph").attr('src', imagesource); 	
+
+      stepclass = '.c' + items[7];
+      $(stepclass).css('background-color', '#dddddd');
+
+      });
+}
+
+
+function getinst()
+{
+
+      var TempURL = "http://" + window.location.host + "/cgi-bin/PiOvenAJAX.py"
+      $.getJSON( TempURL, function( data ) {
+
+      var items = [];
+      $.each( data, function( key, val ) {
+        items.push( val );
+      });
+
+      var instructions = []
+      $.each( items[4], function(key, val) {
+	instructions.push( val );
+      });
+
+      for (var i = 1; i <= instructions.length; i++ ) {
+        var j = i - 1;
+	var markup = "<tr class='c" + i + "'><td>" + instructions[j].step + "</td><td>" + instructions[j].time + "</td><td>" + instructions[j].temp + "</td>";
+      	$("#oveninst tbody").append(markup);
+      }
+
+      stepclass = '.c' + items[7];
+      $(stepclass).css('background-color', '#dddddd');
+      
+      });
+}
+
+$( document ).ready( gettemp );
+$( document ).ready( getgraph );
+$( document ).ready( getinst );
+
 setInterval( gettemp, 15000 );
+setInterval( getgraph, 60000 );
+
 </script>
  
 </body>

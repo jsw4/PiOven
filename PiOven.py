@@ -123,6 +123,7 @@ class wrstatus(object):
                 except IOError:
                         return False
 
+# replace with 'import logging'
 class log(object):
         """write an entry to the log
         todo - this is really a function, not an object
@@ -164,6 +165,7 @@ class line(object):
                 self.x1 = 0 # now
                 self.y2 = float(self.temp)
                 self.x2 = float(self.time)
+                # x.2 could be HOLD / H (math won't work)
                 try:
                         self.slope = (self.y2 - self.y1) / (self.x2 - self.x1)
                 except ZeroDivisionError:

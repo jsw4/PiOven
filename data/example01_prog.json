@@ -1,6 +1,6 @@
 {
-  "name": "EZ Bake Example Cycle",
-  "slug": "ebe",
+  "name": "Example Cycle",
+  "slug": "excy",
   "endpoints": [
     {
       "step": 1,

@@ -26,10 +26,8 @@ if os.path.isfile(pid_filename):
     sys.exit('PiOven program already running.')
 
 me = str(os.getpid())
-
 with open(pid_filename, "w") as pid_file:
     pid_file.write(me)
-    pid_file.close
 
 oven = PiOven.file2obj(cfg.oven_conf_filename)
 program = PiOven.file2obj(cfg.program_filename)
@@ -52,7 +50,7 @@ for endpoint in program.endpoints:
     # program.endpoints.index(endpoint) returns array index of current endpoint
     line = PiOven.line(endpoint,last_temp)
     start_t = time.time()
-    ls = "Begining of instruction number %s, %s minutes to %s deg. F" % ( str(line.step), str(line.time), str(line.temp) )
+    ls = "Beginning of instruction number %s, %s minutes to %s deg. F" % ( str(line.step), str(line.time), str(line.temp) )
     PiOven.log(cfg.log_filename, ls)
     if line.slope == 'INF':
         # max preheat time in minutes
@@ -114,6 +112,7 @@ for endpoint in program.endpoints:
         
     # if time is over but temperature is not reached
     # FIX: got here when temp was reached. (time was not up)
+    # because end_t is reset to end the loop.
     #if (end_t <= time.time()) and (line.slope == 'INF'):
         #ovenerror = "%s heat/cool %s time, %s, exceeded; program is ending." % (line.slope, line.slopedir, oven.maxpreheattime)
         #PiOven.log(cfg.log_filename, ovenerror)
