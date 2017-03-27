@@ -11,9 +11,9 @@ http://www.fotek.com.hk/solid/SSR-1.htm
 Breadboard diagram is included in images directory. (SSR shown in diagram is not the FOTEK SSR-40DA.)
 
 TODO:  
-[ ] Setup \\ Install documents  
-[ ] Accept oven configuration filename and program filename as arguements when calling PiOvenProgram.py  
-[ ] Impliment interrupts: NEXTSTEP and STOPNOW  
-[ ] Impliment HOLD as time for instructions in \*\_prog.json  
-[ ] Impliment saftey checks based on oven configuration  
-[ ] Make wrappers to operate from the web interface, create in subdir of cgi-bin  
+-[ ] Setup \\ Install documents  
+-[ ] Accept oven configuration filename and program filename as arguements when calling PiOvenProgram.py  
+-[ ] Impliment interrupts: NEXTSTEP and STOPNOW  
+-[ ] Impliment HOLD as time for instructions in \*\_prog.json  
+-[ ] Impliment saftey checks based on oven configuration  
+-[ ] Make wrappers to operate from the web interface, create in subdir of cgi-bin  
